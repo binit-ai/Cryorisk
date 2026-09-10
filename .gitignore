@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+*.pyc
+data/*.tif
+data/*.geojson
+data/rgi_region15/
+data/*.zip
+.DS_Store
