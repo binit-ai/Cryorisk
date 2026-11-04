@@ -1,5 +1,3 @@
-"""Earth Engine authentication / initialization (ported from scripts/legacy/01_gee_auth.py)."""
-
 from __future__ import annotations
 
 import ee
@@ -8,12 +6,12 @@ _initialized: str | None = None
 
 
 def authenticate() -> None:
-    """Interactive browser login. Only needed once per machine."""
     ee.Authenticate()
 
 
 def init(project: str | None) -> None:
-    """Initialize EE once per process. Must run before any ee.Geometry/ee.Image is created."""
+    # Has to run before any ee.Geometry/ee.Image is built, otherwise EE throws
+    # "not initialized" at construction time (bit us in the old script 03).
     global _initialized
     if not project:
         raise ValueError(

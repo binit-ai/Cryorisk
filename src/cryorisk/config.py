@@ -1,5 +1,3 @@
-"""Load and validate YAML configuration in configs/."""
-
 from __future__ import annotations
 
 import os
@@ -15,7 +13,7 @@ CONFIG_DIR = Path(os.environ.get("CRYORISK_CONFIG_DIR", REPO_ROOT / "configs"))
 
 
 class Season(BaseModel):
-    start: str  # "MM-DD"
+    start: str  # MM-DD
     end: str
 
     @field_validator("start", "end")
@@ -27,7 +25,6 @@ class Season(BaseModel):
         return v
 
     def date_range(self, year: int) -> tuple[str, str]:
-        """Return ISO (start, end_exclusive-ish) dates for a given year."""
         return f"{year}-{self.start}", f"{year}-{self.end}"
 
 
@@ -58,9 +55,11 @@ class ProjectConfig(BaseModel):
         w, s, e, n = self.region_bbox
         if not (w < e and s < n):
             raise ValueError("region_bbox must be [west, south, east, north]")
+        # Env wins so Kaggle/CI can point at a different GEE project without editing yaml
         env = os.environ.get("CRYORISK_GEE_PROJECT")
         if env:
             self.gee_project = env
+        # Anchor relative paths to the repo, not cwd — notebooks run from notebooks/
         self.paths = self.paths.resolve(REPO_ROOT)
         return self
 

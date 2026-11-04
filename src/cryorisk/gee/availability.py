@@ -1,9 +1,3 @@
-"""Sentinel-1/-2 scene counts (ported from scripts/legacy/03_check_sentinel_availability.py).
-
-Unlike the legacy script, per-year counts are computed server-side and fetched in a single
-getInfo() call per sensor instead of one round-trip per year.
-"""
-
 from __future__ import annotations
 
 import ee
@@ -30,19 +24,18 @@ def s1_collection(geom: ee.Geometry, start: str, end: str):
     )
 
 
-def counts_by_year(collection: ee.ImageCollection, years: list[int]) -> dict[int, int]:
-    """Count images per calendar year with one server round-trip."""
+def _counts(windows: dict[int, tuple[str, str]], collection: ee.ImageCollection) -> dict[int, int]:
+    # Build every count server-side and fetch once; the old script did a getInfo per year.
     counts = ee.Dictionary.fromLists(
-        [str(y) for y in years],
-        [collection.filterDate(f"{y}-01-01", f"{y + 1}-01-01").size() for y in years],
+        [str(y) for y in windows],
+        [collection.filterDate(s, e).size() for s, e in windows.values()],
     ).getInfo()
     return {int(k): int(v) for k, v in counts.items()}
+
+
+def counts_by_year(collection: ee.ImageCollection, years: list[int]) -> dict[int, int]:
+    return _counts({y: (f"{y}-01-01", f"{y + 1}-01-01") for y in years}, collection)
 
 
 def seasonal_counts(collection: ee.ImageCollection, years: list[int], season) -> dict[int, int]:
-    """Count images inside the configured seasonal window for each year."""
-    counts = ee.Dictionary.fromLists(
-        [str(y) for y in years],
-        [collection.filterDate(*season.date_range(y)).size() for y in years],
-    ).getInfo()
-    return {int(k): int(v) for k, v in counts.items()}
+    return _counts({y: season.date_range(y) for y in years}, collection)

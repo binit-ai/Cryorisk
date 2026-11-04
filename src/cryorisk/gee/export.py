@@ -1,5 +1,3 @@
-"""Export stacks to Google Drive or download them locally on an exact grid."""
-
 from __future__ import annotations
 
 import hashlib
@@ -15,11 +13,13 @@ from cryorisk.data.grid import Grid
 from cryorisk.gee.stack import BAND_NAMES, BANDS, NODATA
 
 DRIVE_FOLDER = "cryorisk"
-TILE_PX = 512  # computePixels request size; 512*512*12*2 B ≈ 6 MB, well under the 48 MB cap
+# computePixels caps responses at 48 MB; 512² x 12 bands x int16 is ~6 MB
+TILE_PX = 512
 
 
 def grid_geometry(grid: Grid) -> ee.Geometry:
     minx, miny, maxx, maxy = grid.bounds
+    # geodesic=False so EE treats the edges as straight lines in UTM, matching the grid
     return ee.Geometry.Rectangle([minx, miny, maxx, maxy], proj=grid.crs, geodesic=False)
 
 
@@ -28,6 +28,7 @@ def estimated_bytes(grid: Grid) -> int:
 
 
 def export_to_drive(image: ee.Image, grid: Grid, name: str) -> ee.batch.Task:
+    # crsTransform (not scale) pins pixel edges to our grid; scale lets EE pick its own origin
     task = ee.batch.Export.image.toDrive(
         image=image,
         description=name,
@@ -61,6 +62,7 @@ def _compute_tile(image: ee.Image, g: Grid, retries: int = 3) -> np.ndarray:
             "crsCode": g.crs,
         },
     }
+    # EE throws intermittent 429/"computation timed out" on busy days; back off and retry
     for attempt in range(retries):
         try:
             arr = ee.data.computePixels(request)
@@ -73,7 +75,6 @@ def _compute_tile(image: ee.Image, g: Grid, retries: int = 3) -> np.ndarray:
 
 
 def download_local(image: ee.Image, grid: Grid, out_path: Path, progress=print) -> Path:
-    """Download the full grid in TILE_PX tiles via computePixels and write a GeoTIFF."""
     import rasterio
 
     out = np.full((len(BANDS), grid.height, grid.width), NODATA, dtype=np.int16)
@@ -96,7 +97,7 @@ def download_local(image: ee.Image, grid: Grid, out_path: Path, progress=print) 
         "transform": grid.rasterio_transform(),
         "nodata": NODATA,
         "compress": "deflate",
-        "predictor": 2,
+        "predictor": 2,  # horizontal differencing; ~2x smaller on smooth DEM/reflectance
         "tiled": True,
         "blockxsize": 256,
         "blockysize": 256,
@@ -120,6 +121,7 @@ def write_manifest(path: Path, *, aoi: str, year: int, start: str, end: str, gri
     }
     manifest = {
         **params,
+        # hash only the inputs, so a changed band list or grid shows up as a new version
         "params_hash": hashlib.sha256(json.dumps(params, sort_keys=True).encode()).hexdigest()[:16],
         "scenes": meta,
         "target": target,

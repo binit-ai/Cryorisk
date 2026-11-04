@@ -1,9 +1,3 @@
-"""Deterministic AOI grids snapped to the project resolution in UTM (docs/DESIGN.md D4).
-
-Every product for an AOI (S2/S1/DEM stacks, labels, predictions, velocity) uses the same
-grid, so pixels line up exactly across years and sensors.
-"""
-
 from __future__ import annotations
 
 import json
@@ -16,23 +10,24 @@ from pyproj import Transformer
 from shapely.geometry import shape
 
 
+# One fixed grid per AOI. Stacks, labels, predictions and velocity all share it,
+# so IoU and image pairs never need resampling.
 @dataclass(frozen=True)
 class Grid:
     crs: str
-    x0: float  # upper-left corner, easting (m)
-    y0: float  # upper-left corner, northing (m)
+    x0: float  # upper-left corner
+    y0: float
     res: float
     width: int
     height: int
 
     @property
     def bounds(self) -> tuple[float, float, float, float]:
-        """(minx, miny, maxx, maxy) in grid CRS."""
         return self.x0, self.y0 - self.height * self.res, self.x0 + self.width * self.res, self.y0
 
     @property
     def crs_transform(self) -> list[float]:
-        """Earth Engine crsTransform [xScale, xShear, xOff, yShear, yScale, yOff]."""
+        # EE order: [xScale, xShear, xOff, yShear, yScale, yOff]
         return [self.res, 0, self.x0, 0, -self.res, self.y0]
 
     def rasterio_transform(self):
@@ -41,7 +36,6 @@ class Grid:
         return from_origin(self.x0, self.y0, self.res, self.res)
 
     def subgrid(self, row: int, col: int, h: int, w: int) -> Grid:
-        """Window of this grid starting at pixel (row, col), clipped to the grid."""
         h = min(h, self.height - row)
         w = min(w, self.width - col)
         return Grid(self.crs, self.x0 + col * self.res, self.y0 - row * self.res, self.res, w, h)
@@ -51,14 +45,14 @@ class Grid:
 
 
 def load_polygon(geojson_path: Path):
-    """First feature geometry of a GeoJSON FeatureCollection (WGS84)."""
     with open(geojson_path) as f:
         fc = json.load(f)
     return shape(fc["features"][0]["geometry"])
 
 
 def aoi_grid(polygon_wgs84, crs: str, res: float, buffer_m: float) -> Grid:
-    """Buffer the polygon in metres, then snap its bounds outward to multiples of res."""
+    # Buffer in metres (UTM), not degrees, then snap outward to whole pixels so every
+    # year lands on exactly the same pixel edges.
     to_utm = Transformer.from_crs("EPSG:4326", crs, always_xy=True).transform
     poly = shapely.transform(polygon_wgs84, to_utm, interleaved=False).buffer(buffer_m)
     minx, miny, maxx, maxy = poly.bounds

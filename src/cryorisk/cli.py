@@ -1,5 +1,3 @@
-"""`cryorisk` command-line interface. One subcommand per pipeline stage (docs/DESIGN.md §11)."""
-
 from __future__ import annotations
 
 import typer
@@ -10,6 +8,8 @@ app = typer.Typer(help="CryoRisk glacier pipeline", no_args_is_help=True)
 rgi_app = typer.Typer(help="Randolph Glacier Inventory outlines", no_args_is_help=True)
 app.add_typer(rgi_app, name="rgi")
 
+# Heavy deps (ee, rasterio) are imported inside commands so `--help` stays instant.
+
 
 def _init_ee():
     from cryorisk.gee import auth
@@ -19,7 +19,7 @@ def _init_ee():
 
 @app.command()
 def auth():
-    """Log in to Earth Engine (opens a browser) and verify initialization."""
+    """Log in to Earth Engine (opens a browser)."""
     from cryorisk.gee import auth as gee_auth
 
     gee_auth.authenticate()
@@ -29,7 +29,7 @@ def auth():
 
 @app.command()
 def glaciers():
-    """Show configured study glaciers and whether their RGI ids are confirmed."""
+    """List study glaciers, their split and RGI id."""
     for g in load_glaciers().glaciers:
         status = g.rgi_id or "UNCONFIRMED (run `cryorisk rgi search`)"
         typer.echo(f"{g.split:5}  {g.name:18}  {status}")
@@ -40,7 +40,7 @@ def rgi_search(
     name: str = typer.Argument(None, help="Name substring, e.g. 'Khumbu'. Omit to list all."),
     min_area: float = typer.Option(1.0, help="Minimum area in km²"),
 ):
-    """Search RGI7 inside the project region to find rgi_ids for configs/glaciers.yaml."""
+    """Search RGI7 in the project region by name."""
     from cryorisk.gee import rgi
 
     _init_ee()
@@ -54,7 +54,7 @@ def rgi_search(
 
 @rgi_app.command("fetch")
 def rgi_fetch():
-    """Download RGI7 outlines for every confirmed glacier to data/rgi/<slug>.geojson."""
+    """Download RGI7 outlines to data/rgi/."""
     from cryorisk.gee import rgi
 
     _init_ee()
@@ -72,7 +72,7 @@ def rgi_fetch():
 
 @app.command()
 def availability(max_cloud: float = typer.Option(30, help="Max S2 cloudy pixel %")):
-    """Count Sentinel-1/-2 scenes per year (total and in the post-monsoon season)."""
+    """Count Sentinel-1/-2 scenes per year and per season."""
     from cryorisk.gee import availability as av
     from cryorisk.gee import rgi
 
@@ -109,7 +109,7 @@ def ingest(
     dry_run: bool = typer.Option(False, help="Only print grids and size estimates"),
     force: bool = typer.Option(False, help="Re-export even if a manifest already exists"),
 ):
-    """Build 12-band post-monsoon stacks and export them on the AOI's fixed UTM grid."""
+    """Build 12-band seasonal stacks and export to Drive or disk."""
     if to not in ("drive", "local"):
         raise typer.BadParameter("--to must be 'drive' or 'local'")
     from cryorisk.data.grid import aoi_grid, load_polygon
@@ -153,7 +153,7 @@ def ingest(
             else:
                 out = export.download_local(img, grid, raw_dir / "stack.tif", progress=typer.echo)
                 typer.echo(f"  saved {out}")
-            # one manifest per target so a Drive run never clobbers a local stack's record
+            # separate manifests: a drive run used to overwrite the local stack's record
             export.write_manifest(
                 raw_dir / f"manifest_{to}.json", aoi=g.slug, year=y, start=start, end=end,
                 grid=grid, meta=meta, target=to, task_id=task_id,
@@ -164,7 +164,7 @@ def ingest(
 
 @app.command()
 def tasks(limit: int = typer.Option(20, help="How many recent tasks to show")):
-    """Show recent Earth Engine export task status."""
+    """Show recent Earth Engine export tasks."""
     import ee
 
     _init_ee()
@@ -174,7 +174,7 @@ def tasks(limit: int = typer.Option(20, help="How many recent tasks to show")):
 
 @app.command()
 def inspect(path: str):
-    """Print per-band valid %, min/median/max (physical units) for a stack GeoTIFF."""
+    """Per-band coverage and value ranges for a stack GeoTIFF."""
     from pathlib import Path
 
     from cryorisk.data.inspect import stack_report
