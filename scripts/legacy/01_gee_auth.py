@@ -8,7 +8,7 @@ def main():
     parser.add_argument(
         "--project",
         required=True,
-        help="psychic-diorama-490615-j4",
+        help="Your GEE Cloud Project ID",
     )
     args = parser.parse_args()
 

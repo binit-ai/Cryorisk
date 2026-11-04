@@ -5,4 +5,10 @@ data/*.tif
 data/*.geojson
 data/rgi_region15/
 data/*.zip
-.DS_Store
+.DS_Store.venv/
+data/
+models/
+reports/*.html
+.env
+.pytest_cache/
+.ruff_cache/

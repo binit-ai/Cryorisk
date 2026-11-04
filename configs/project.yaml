@@ -1,0 +1,21 @@
+# Global CryoRisk settings. Override the GEE project with env var CRYORISK_GEE_PROJECT.
+gee_project: null  # set CRYORISK_GEE_PROJECT instead of committing it
+
+crs: EPSG:32645        # UTM zone 45N — all products are stored on this grid
+resolution_m: 10
+
+years: [2016, 2025]    # inclusive range
+season:                # post-monsoon window: least cloud and seasonal snow
+  start: "10-01"
+  end: "11-30"
+
+# Region used to search RGI and check imagery availability (lon/lat, WGS84)
+region_bbox: [86.55, 27.80, 87.05, 28.15]
+aoi_buffer_m: 1500
+
+rgi_asset: projects/sat-io/open-datasets/RGI/RGI_VECTOR_MERGED_V7
+
+paths:
+  data: data
+  models: models
+  reports: reports
