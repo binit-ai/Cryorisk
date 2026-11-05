@@ -1,7 +1,9 @@
 name: CI
 
 on:
+  # push on every branch plus pull_request ran CI twice per PR commit
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -10,11 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-        with:
-          python-version: "3.11"
+      # The runner has no system 3.11 for `uv pip --system`; give uv its own venv instead
       - name: Install
-        run: uv pip install --system -e ".[dev]"
+        run: |
+          uv venv --python 3.11 .venv
+          uv pip install --python .venv/bin/python -e ".[dev]"
       - name: Lint
-        run: ruff check src tests
+        run: .venv/bin/ruff check src tests
       - name: Unit tests (no GEE / DB)
-        run: pytest -q
+        run: .venv/bin/pytest -q
