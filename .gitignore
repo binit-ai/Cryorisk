@@ -7,6 +7,7 @@ __pycache__/
 .ruff_cache/
 .env
 .DS_Store
+.vscode/
 
 # large / generated data (repo-root only, so src/cryorisk/data/ is still tracked)
 /data/
