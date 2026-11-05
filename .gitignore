@@ -12,3 +12,6 @@ __pycache__/
 /data/
 /models/
 /reports/*.html
+
+# local-only design doc
+/docs/DESIGN.md

@@ -1,6 +1,5 @@
-# Study glaciers and their data split (docs/DESIGN.md §2).
+# Study glaciers. Split is by glacier so the test score is on glaciers never seen in training.
 # All rgi_ids confirmed via `cryorisk rgi search` against RGI v7 (2026-11-04).
-# Split is by glacier so the test score measures generalization to unseen glaciers.
 glaciers:
   # --- train ---
   - name: Ngozumpa

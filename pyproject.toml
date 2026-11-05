@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "cryorisk"
 version = "0.1.0"
 description = "Glacier segmentation, hazard detection and surface velocity for the Khumbu region"
-readme = "docs/DESIGN.md"
+readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "earthengine-api>=1.0",
@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Heavy extras are installed only when a milestone needs them (see docs/DESIGN.md §14).
+# Heavy extras: install only when a milestone needs them.
 ml = [
     "torch>=2.3",
     "segmentation-models-pytorch>=0.3.4",
