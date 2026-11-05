@@ -1,8 +1,18 @@
+# environments
 venv/
+.venv/
 __pycache__/
 *.pyc
-data/*.tif
-data/*.geojson
-data/rgi_region15/
-data/*.zip
+.pytest_cache/
+.ruff_cache/
+.env
 .DS_Store
+.vscode/
+
+# large / generated data (repo-root only, so src/cryorisk/data/ is still tracked)
+/data/
+/models/
+/reports/*.html
+
+# local-only design doc
+/docs/DESIGN.md

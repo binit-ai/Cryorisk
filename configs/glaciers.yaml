@@ -1,0 +1,42 @@
+# Study glaciers. Split is by glacier so the test score is on glaciers never seen in training.
+# All rgi_ids confirmed via `cryorisk rgi search` against RGI v7 (2026-11-04).
+glaciers:
+  # --- train ---
+  - name: Ngozumpa
+    rgi_name: Ngojumba
+    rgi_id: RGI2000-v7.0-G-15-08305
+    split: train
+  - name: Lhotse
+    rgi_name: Lothse Glacier
+    rgi_id: RGI2000-v7.0-G-15-06758
+    split: train
+  - name: Nuptse
+    rgi_name: Nuptse Glacier
+    rgi_id: RGI2000-v7.0-G-15-06755
+    split: train
+  - name: Changri Shar-Nup
+    rgi_name: Changri Shar/Nup Gl
+    rgi_id: RGI2000-v7.0-G-15-08295
+    split: train
+  - name: Bhote Kosi
+    rgi_name: Bhote Kosi
+    rgi_id: RGI2000-v7.0-G-15-08551
+    split: train
+  - name: Melung
+    rgi_name: Melung
+    rgi_id: RGI2000-v7.0-G-15-08547
+    split: train
+  # --- val ---
+  - name: Imja-Lhotse Shar
+    rgi_name: Imja/Lhotse Shar Gl.
+    rgi_id: RGI2000-v7.0-G-15-06763
+    split: val
+  # --- test (held out) ---
+  - name: Khumbu
+    rgi_name: Khumbu Glacier
+    rgi_id: RGI2000-v7.0-G-15-08331
+    split: test
+  - name: Hungu-Merala
+    rgi_name: Hungu and Merala
+    rgi_id: RGI2000-v7.0-G-15-06769
+    split: test
