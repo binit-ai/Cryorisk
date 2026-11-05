@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -65,3 +66,23 @@ def test_duplicate_rgi_ids_rejected():
 def test_season_date_range():
     cfg = load_project()
     assert cfg.season.date_range(2020) == ("2020-10-01", "2020-11-30")
+
+
+def test_dotenv_fills_missing_vars_only(tmp_path, monkeypatch):
+    from cryorisk.config import load_dotenv
+
+    env = tmp_path / ".env"
+    env.write_text('# comment\nCRYO_A=from_file\nCRYO_B="quoted"\n\nnot a pair\n')
+    monkeypatch.delenv("CRYO_A", raising=False)
+    monkeypatch.delenv("CRYO_B", raising=False)
+    monkeypatch.setenv("CRYO_A", "from_shell")
+
+    load_dotenv(env)
+    assert os.environ["CRYO_A"] == "from_shell"
+    assert os.environ["CRYO_B"] == "quoted"
+
+
+def test_dotenv_missing_file_is_noop(tmp_path):
+    from cryorisk.config import load_dotenv
+
+    load_dotenv(tmp_path / "nope.env")

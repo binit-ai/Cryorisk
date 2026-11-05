@@ -1,5 +1,5 @@
-# Global CryoRisk settings. Override the GEE project with env var CRYORISK_GEE_PROJECT.
-gee_project: null  # set CRYORISK_GEE_PROJECT instead of committing it
+# Global CryoRisk settings. The GEE project comes from CRYORISK_GEE_PROJECT (see .env.example).
+gee_project: null
 
 crs: EPSG:32645        # UTM zone 45N — all products are stored on this grid
 resolution_m: 10

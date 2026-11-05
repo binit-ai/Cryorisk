@@ -9,6 +9,23 @@ import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def load_dotenv(path: Path) -> None:
+    # Tiny parser on purpose; KEY=VALUE is all we need and it avoids another dependency.
+    # setdefault so a real exported var always beats the file.
+    if not path.is_file():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+
+
+# Keeps the GEE project id out of git: it lives in the untracked .env
+load_dotenv(REPO_ROOT / ".env")
 CONFIG_DIR = Path(os.environ.get("CRYORISK_CONFIG_DIR", REPO_ROOT / "configs"))
 
 
